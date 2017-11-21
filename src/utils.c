@@ -1,9 +1,5 @@
 
 char *readFile(const char *filename) {
-    /////////////////////////////////////////////////////////////
-    // Read content of "filename" and return it as a c-string. //
-    /////////////////////////////////////////////////////////////
-    printf("Reading %s\n", filename);
     FILE *f = fopen(filename, "rb");
 
     fseek(f, 0, SEEK_END);
@@ -26,7 +22,7 @@ void CompileShader(const char *shader_path, GLuint ShaderID) {
     char *shader_source = readFile(shader_path);
 
     // Compile Shader
-    //printf("Compiling shader : %s\n", file_path);
+    printf("Compiling shader : %s\n", shader_path);
     glShaderSource(ShaderID, 1, (const char**)&shader_source , NULL);
     glCompileShader(ShaderID);
 

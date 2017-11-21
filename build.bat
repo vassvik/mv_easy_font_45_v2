@@ -6,15 +6,13 @@ cd %~dp0
 
 utils\otime -begin timings.otm
 
-cl /nologo /MP^
+cl /nologo /MTd /MP^
  /Iinclude^
  src\main.c^
- gdi32.lib ^
- shell32.lib^
  lib\glfw3.lib^
+ shell32.lib^
  user32.lib^
- msvcrtd.lib^
- libcmt.lib
+ gdi32.lib
 
 del *.obj
 

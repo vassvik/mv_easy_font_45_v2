@@ -56,6 +56,7 @@ int main() {
     // main loop
     while (!glfwWindowShouldClose(window)) {
     	glfwPollEvents();
+    	
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, GLFW_TRUE);
 
         glClear(GL_COLOR_BUFFER_BIT);
