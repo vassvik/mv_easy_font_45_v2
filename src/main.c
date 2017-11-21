@@ -10,11 +10,21 @@
 #include "utils.c"
 #include "font.c"
 
+#define STB_RECT_PACK_IMPLEMENTATION
+#include <stb/stb_rect_pack.h>
+#define STB_TRUETYPE_IMPLEMENTATION
+#include <stb/stb_truetype.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb/stb_image_write.h>
 
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
 }
+
+typedef struct Font_Metric {
+	float ascent, descent, linegap, scale;
+} Font_Metric;
 
 int main() {
 
@@ -53,10 +63,79 @@ int main() {
     // config opengl
     glClearColor(39/255.0, 40/255.0, 34/255.0, 1.0);	
 
+    // load font stuff
+    FILE *fp = fopen("consola.ttf", "rb");
+
+    int ttf_size_max = 1e6; // most likely large enough, 1MB
+    unsigned char *ttf_buffer = (unsigned char*)malloc(ttf_size_max);
+    fread(ttf_buffer, 1, ttf_size_max, fp);
+    
+    fclose(fp);
+
+    // probably large enough
+    int width = 1024;
+    int height = 1024;
+    unsigned char *bitmap = (unsigned char*)malloc(height*width);
+    
+    #define NUM_SIZES 16
+
+    stbtt_pack_context pc;
+    stbtt_packedchar cdatas[NUM_SIZES][95];
+    stbtt_pack_range ranges[99] = {{72, 32, NULL, 95, cdatas[0], 0, 0},
+                                   {68, 32, NULL, 95, cdatas[1], 0, 0},
+                                   {64, 32, NULL, 95, cdatas[2], 0, 0},
+                                   {60, 32, NULL, 95, cdatas[3], 0, 0},
+                                   {56, 32, NULL, 95, cdatas[4], 0, 0},
+                                   {52, 32, NULL, 95, cdatas[5], 0, 0},
+                                   {48, 32, NULL, 95, cdatas[6], 0, 0},
+                                   {44, 32, NULL, 95, cdatas[7], 0, 0},
+                                   {40, 32, NULL, 95, cdatas[8], 0, 0},
+                                   {36, 32, NULL, 95, cdatas[9], 0, 0},
+                                   {32, 32, NULL, 95, cdatas[10], 0, 0},
+                                   {28, 32, NULL, 95, cdatas[11], 0, 0},
+                                   {24, 32, NULL, 95, cdatas[12], 0, 0},
+                                   {20, 32, NULL, 95, cdatas[13], 0, 0},
+                                   {16, 32, NULL, 95, cdatas[14], 0, 0},
+                                   {12, 32, NULL, 95, cdatas[15], 0, 0}};
+
+    stbtt_PackBegin(&pc, bitmap, width, height, 0, 1, NULL);   
+    stbtt_PackSetOversampling(&pc, 1, 1);
+    stbtt_PackFontRanges(&pc, ttf_buffer, 0, ranges, NUM_SIZES);
+    stbtt_PackEnd(&pc);
+
+    Font_Metric font_metrics[NUM_SIZES];
+
+    stbtt_fontinfo info;
+    stbtt_InitFont(&info, ttf_buffer, stbtt_GetFontOffsetForIndex(ttf_buffer,0));
+    for (int i = 0; i < NUM_SIZES; i++) {
+        font_metrics[i].scale = stbtt_ScaleForPixelHeight(&info, ranges[i].font_size);
+        int a, d, l;
+        stbtt_GetFontVMetrics(&info, &a, &d, &l);
+        
+        font_metrics[i].ascent  = a*font_metrics[i].scale;
+        font_metrics[i].descent = d*font_metrics[i].scale;
+        font_metrics[i].linegap = l*font_metrics[i].scale;
+    }
+
+    int filled = 0, max_y = 0;
+    for (int j = 0; j < NUM_SIZES; j++) {
+        for (int i = 0; i < 95; i++) {
+            if (cdatas[j][i].y1 > max_y) max_y = cdatas[j][i].y1;
+            filled += (cdatas[j][i].x1 - cdatas[j][i].x0)*(cdatas[j][i].y1 - cdatas[j][i].y0);
+        }
+    }
+
+    printf("max_y = %d\n", max_y);
+    printf("fill rate = %f\n", filled/(double)(width*max_y));
+    fflush(stdout);
+
+    stbi_write_png("font_1x1.png", width, max_y, 1, bitmap, 0);
+
+
     // main loop
     while (!glfwWindowShouldClose(window)) {
     	glfwPollEvents();
-    	
+
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) glfwSetWindowShouldClose(window, GLFW_TRUE);
 
         glClear(GL_COLOR_BUFFER_BIT);
