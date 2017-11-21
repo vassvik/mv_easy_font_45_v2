@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"name": "src",
+			"path": "src"
+		},
+		{
+			"name": "include",
+			"path": "include"
+		},
+		{
+			"name": "Font renderer OpenGL 4.5: Root",
+			"path": "."
+		}
+	]
+}
