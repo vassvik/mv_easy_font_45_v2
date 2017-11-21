@@ -26,6 +26,24 @@ typedef struct Font_Metric {
 	float ascent, descent, linegap, scale;
 } Font_Metric;
 
+/*typedef struct
+{
+   unsigned short x0,y0,x1,y1; // coordinates of bbox in bitmap
+   float xoff,yoff,xadvance;
+   float xoff2,yoff2;
+} stbtt_packedchar;*/
+typedef stbtt_packedchar Glyph_Metric;
+
+typedef struct Glyph_Instance {
+	unsigned short x,y;
+	unsigned short index, palette;
+} Glyph_Instance;
+
+typedef struct Vec4 {
+	float x, y, z, w;
+} Vec4;
+
+
 int main() {
 
 	// Setup glfw
@@ -80,23 +98,23 @@ int main() {
     #define NUM_SIZES 16
 
     stbtt_pack_context pc;
-    stbtt_packedchar cdatas[NUM_SIZES][95];
-    stbtt_pack_range ranges[99] = {{72, 32, NULL, 95, cdatas[0], 0, 0},
-                                   {68, 32, NULL, 95, cdatas[1], 0, 0},
-                                   {64, 32, NULL, 95, cdatas[2], 0, 0},
-                                   {60, 32, NULL, 95, cdatas[3], 0, 0},
-                                   {56, 32, NULL, 95, cdatas[4], 0, 0},
-                                   {52, 32, NULL, 95, cdatas[5], 0, 0},
-                                   {48, 32, NULL, 95, cdatas[6], 0, 0},
-                                   {44, 32, NULL, 95, cdatas[7], 0, 0},
-                                   {40, 32, NULL, 95, cdatas[8], 0, 0},
-                                   {36, 32, NULL, 95, cdatas[9], 0, 0},
-                                   {32, 32, NULL, 95, cdatas[10], 0, 0},
-                                   {28, 32, NULL, 95, cdatas[11], 0, 0},
-                                   {24, 32, NULL, 95, cdatas[12], 0, 0},
-                                   {20, 32, NULL, 95, cdatas[13], 0, 0},
-                                   {16, 32, NULL, 95, cdatas[14], 0, 0},
-                                   {12, 32, NULL, 95, cdatas[15], 0, 0}};
+    Glyph_Metric glyph_metrics[NUM_SIZES][95];
+    stbtt_pack_range ranges[99] = {{72, 32, NULL, 95, glyph_metrics[0], 0, 0},
+                                   {68, 32, NULL, 95, glyph_metrics[1], 0, 0},
+                                   {64, 32, NULL, 95, glyph_metrics[2], 0, 0},
+                                   {60, 32, NULL, 95, glyph_metrics[3], 0, 0},
+                                   {56, 32, NULL, 95, glyph_metrics[4], 0, 0},
+                                   {52, 32, NULL, 95, glyph_metrics[5], 0, 0},
+                                   {48, 32, NULL, 95, glyph_metrics[6], 0, 0},
+                                   {44, 32, NULL, 95, glyph_metrics[7], 0, 0},
+                                   {40, 32, NULL, 95, glyph_metrics[8], 0, 0},
+                                   {36, 32, NULL, 95, glyph_metrics[9], 0, 0},
+                                   {32, 32, NULL, 95, glyph_metrics[10], 0, 0},
+                                   {28, 32, NULL, 95, glyph_metrics[11], 0, 0},
+                                   {24, 32, NULL, 95, glyph_metrics[12], 0, 0},
+                                   {20, 32, NULL, 95, glyph_metrics[13], 0, 0},
+                                   {16, 32, NULL, 95, glyph_metrics[14], 0, 0},
+                                   {12, 32, NULL, 95, glyph_metrics[15], 0, 0}};
 
     stbtt_PackBegin(&pc, bitmap, width, height, 0, 1, NULL);   
     stbtt_PackSetOversampling(&pc, 1, 1);
@@ -120,13 +138,12 @@ int main() {
     int filled = 0, max_y = 0;
     for (int j = 0; j < NUM_SIZES; j++) {
         for (int i = 0; i < 95; i++) {
-            if (cdatas[j][i].y1 > max_y) max_y = cdatas[j][i].y1;
-            filled += (cdatas[j][i].x1 - cdatas[j][i].x0)*(cdatas[j][i].y1 - cdatas[j][i].y0);
+            if (glyph_metrics[j][i].y1 > max_y) max_y = glyph_metrics[j][i].y1;
+            filled += (glyph_metrics[j][i].x1 - glyph_metrics[j][i].x0)*(glyph_metrics[j][i].y1 - glyph_metrics[j][i].y0);
         }
     }
 
-    printf("max_y = %d\n", max_y);
-    printf("fill rate = %f\n", filled/(double)(width*max_y));
+    printf("max_y = %d, fill rate = %.1f%%\n", max_y, 100*filled/(double)(width*max_y));
     fflush(stdout);
 
     stbi_write_png("font_1x1.png", width, max_y, 1, bitmap, 0);
@@ -141,6 +158,8 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(window);
     }
+
+    free(ttf_buffer);
 
     glfwTerminate();
 
